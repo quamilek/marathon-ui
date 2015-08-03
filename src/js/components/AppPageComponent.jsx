@@ -9,6 +9,7 @@ var AppStatus = require("../constants/AppStatus");
 var AppBreadcrumbsComponent = require("../components/AppBreadcrumbsComponent");
 var AppVersionsActions = require("../actions/AppVersionsActions");
 var AppVersionListComponent = require("../components/AppVersionListComponent");
+var AppLastTaskFailureComponent = require("../components/AppLastTaskFailureComponent");
 var HealthStatus = require("../constants/HealthStatus");
 var States = require("../constants/States");
 var TabPaneComponent = require("../components/TabPaneComponent");
@@ -19,7 +20,8 @@ var util = require("../helpers/util");
 
 var tabsTemplate = [
   {id: "apps/:appid", text: "Tasks"},
-  {id: "apps/:appid/configuration", text: "Configuration"}
+  {id: "apps/:appid/configuration", text: "Configuration"},
+  {id: "apps/:appid/last-task-failure", text: "Last task failure"}
 ];
 
 var statusNameMapping = {
@@ -93,8 +95,11 @@ var AppPageComponent = React.createClass({
     var activeViewIndex = 0;
     var activeTaskId = null;
 
+    console.log(view);
     if (view === "configuration") {
       activeTabId += "/configuration";
+    } else if (view === "last-task-failure"){
+      activeTabId += "/last-task-failure";
     } else if (view != null) {
       activeTaskId = view;
       activeViewIndex = 1;
@@ -279,7 +284,6 @@ var AppPageComponent = React.createClass({
     var state = this.state;
     var model = state.app;
     var props = this.props;
-
     return (
       <TogglableTabsComponent className="page-body page-body-no-top"
           activeTabId={state.activeTabId}
@@ -298,6 +302,10 @@ var AppPageComponent = React.createClass({
           id={"apps/" + encodeURIComponent(props.appId) + "/configuration"}>
           <AppVersionListComponent appId={props.appId} />
         </TabPaneComponent>
+        <TabPaneComponent
+          id={"apps/" + encodeURIComponent(props.appId) + "/last-task-failure"}>
+          <AppLastTaskFailureComponent appId={props.appId} />
+        </TabPaneComponent>
       </TogglableTabsComponent>
     );
   },
@@ -311,9 +319,11 @@ var AppPageComponent = React.createClass({
     var statusClassSet = classNames({
       "text-warning": model.deployments.length > 0
     });
-
+    console.log(this.state.activeViewIndex)
     if (this.state.activeViewIndex === 0) {
       content = this.getAppDetails();
+    } else if (this.state.activeViewIndex === 1) {
+      content = this.getTaskDetailComponent();
     } else if (this.state.activeViewIndex === 1) {
       content = this.getTaskDetailComponent();
     }
